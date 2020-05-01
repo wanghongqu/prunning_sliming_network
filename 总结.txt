@@ -1,0 +1,18 @@
+1. pytorch模型中所有的层的param均是Variable，每个variable内部均由data、grad、grad_fn三部分组成。其中grad在反向传播过程中值是累加进行保存的。我们可通过variable.grad.data是具体的实际值，同时其他两个。
+2. 网络中各层（conv、BN）包含的param主要由两部分weight、bias，Conv.weight、conv.bias、bn.weight、bn.bias几部分。可能通过”.data“访问内部值。con层中每一个卷积核对应一个bias，bn层中每个输入通道，对应一个gammba、一个beta
+3. 整个项目的实现过程主要由以下：
+    a: 执行build_msk，生成msk。msk中取值为0或1。0代表该值对应的输入通道及下层中各卷积核的对应通道剪掉，1代表该输入通道应该保存。
+       初始时各bn_msk中的值均为1
+    b. 正常前向传播
+    c. 反向传播，执行loss.backward()
+    d. 为bn层中的weight增加0.1倍梯度。执行extrac_grad
+    e. 判断准确率是否达到了90%+
+        0) 依次访问第i个batchnormalization层（i取1、2、3、4……）,记为bn。
+        1）计算当前bn层对应的msk中的取值为0的位数是否达到了cfg.RATE，如果未达到则进行以下操作。
+        2）执行update_bn,选取当前bn.weight中msk掩码不为1的最小值，将该bn.weight.data中所有取该值的位置设置为0，将bn.weight.grad.data中所有取该值的位置设置0。
+          将msk中该位置的值设置为0
+        3) 根据各bn.weight中的msk值更新对应的conv.weight、conv.bias、bn.weight、bn.bias值（注意，每个bn.weight与当前con层有关，还与下一个卷积层也有关，进行更新时容易出错）
+    f. 执行optimizer.step()
+4. 执行模型重建。由于cfg.RATE中指定是的各bn层msk值中0值的比例，因此在进行网络构建时各层其本block个数应该为K-RATE*K形式。感觉该形式中，能有较解决short-cut连接问题
+5. conv.weight.data中是tensor。也即所有.data中保存的是tensor数据结构。
+6. 实验过程中发现3.e部分中不执行第3）小步，通过此操作训练出的剪枝模型与以上训练方式一样有效

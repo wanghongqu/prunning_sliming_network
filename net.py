@@ -161,6 +161,11 @@ def update_grad(model, msk):
 
 
 def extra_grad(model):
+    # for name, param in model.named_parameters():
+    #     print(type(param.data))
+    #     print(type(param.grad))
+    #     print(type(param.grad_fn))
+    #     print('===================')
     for m_name, m_module in model.named_modules():
         if isinstance(m_module, nn.BatchNorm2d):
             m_module.weight.grad.data.add_(cfg.LAMBDA * m_module.weight.grad.data)
@@ -171,3 +176,8 @@ def extra_grad(model):
 # msk = torch.load('models/msk.pth')
 # net.load_state_dict(torch.load('models/model.pth'))
 # restore(net,pruned_net,msk)
+# for name,param in net.named_parameters():
+#     print(type(param.data))
+#     print(type(param.grad))
+#     print(type(param.grad_fn))
+#     print('===================')
