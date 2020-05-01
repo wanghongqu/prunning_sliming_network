@@ -1,0 +1,7 @@
+EPOCH = 5
+BATCH_SIZE = 512
+LEARNING_RATE = 1e-4
+LAMBDA = 1e-4
+RATE = 0.5
+LAYERS = 100
+PATH = './models/model.pth'
